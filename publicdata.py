@@ -10,10 +10,10 @@ if __name__ == "__main__":
 	statinfo = os.stat('../publicvotes.csv')
 	count = 0
 
-	with open('lotsadata.csv', 'wb') as ld:
+	with open('lotsadata.csv', 'a') as ld:
 		writer = csv.writer(ld, delimiter=',')
 		#writer.writerow(['Class', 'Score', 'Title', 'Author', 'Subreddit', 'Domain', 'Self Post?', 'NSFW', 'SubmissionID'])
-		for x in range(0, 1000):
+		for x in range(0, 7000):
 			offset = random.randrange(statinfo.st_size)
 			f = open('../publicvotes.csv')
 			f.seek(offset)

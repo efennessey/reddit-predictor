@@ -9,10 +9,6 @@ def loadCsv(filename):
 		for x in range(len(dataset)):
 			dataset[x][0] = int(dataset[x][0])
 		return dataset
-	"""
-	May have to convert dataset[i][0] (score) to int here?
-	Possibly word count if we choose to use this 
-	"""
 
 
 def splitDataset(dataset, splitRatio):
@@ -104,35 +100,46 @@ def predict(data, summarySub, summaryAuthor, summaryTitle):
 	if s == -1:
 		probSub = [1, 0, 0]
 	else:
-		totSub = summarySub[s][0] + summarySub[s][1] +summarySub[s][2]
+		totSub = float(summarySub[s][0] + summarySub[s][1] +summarySub[s][2])
 		probSub = [summarySub[s][0]/totSub, summarySub[s][1]/totSub, summarySub[s][2]/totSub]
 
-	#Find author
+	#Find author and probabilities
 	a = findData(data, 3, summaryAuthor)
 	if a == -1:
 		probAuth = [1, 0, 0]
 	else:
-		totAuth = summaryAuthor[a][0] + summaryAuthor[a][1] +summaryAuthor[a][2]
+		totAuth = float(summaryAuthor[a][0] + summaryAuthor[a][1] +summaryAuthor[a][2])
 		probAuth = [summaryAuthor[a][0]/totAuth, summaryAuthor[a][2]/totAuth, summaryAuthor[a][2]/totAuth]
 
-	#(Title length is just at that location in the array)
+	#Find title length and probabilities
 	l = findData(data, 2, summaryTitle)
 	if l == -1:
 		probLen = [1, 0, 0]
 	else:
-		totLen = summaryTitle[l][0] + summaryTitle[l][1] + summaryTitle[l][2]
-		probLen = [summarySub[l][0]/totLen, summarySub[l][1]/totLen, summarySub[l][2]/totLen]
+		totLen = float(summaryTitle[l][0] + summaryTitle[l][1] + summaryTitle[l][2])
+		probLen = [summaryTitle[l][0]/totLen, summaryTitle[l][1]/totLen, summaryTitle[l][2]/totLen]
 
 
-	unsuccessful = (probSub[0] + probAuth[0] + probLen[0])/3
-	moderate = (probSub[1] + probAuth[1] + probLen[1])/3
-	successful = (probSub[2] + probAuth[2] + probLen[2])/3
+	unsuccessful = float(probSub[0] + probAuth[0] + probLen[0])/3
+	moderate = float(probSub[1] + probAuth[1] + probLen[1])/3
+	successful = float(probSub[2] + probAuth[2] + probLen[2])/3
 
-	if max([unsuccessful, moderate, successful]) == unsuccessful:
+	if unsuccessful < 0.7:
+		print 'Override: predicted 2'
+		return 2
+	elif unsuccessful < 0.75:
+		print'Override: predicted 1'
+		return 1
+	elif max([unsuccessful, moderate, successful]) == unsuccessful:
+		print '0 Probability: ' + str(unsuccessful)
+		print '1 Probability: ' + str(moderate)
+		print '2 Probability: ' + str(successful)
 		return 0
 	elif max([unsuccessful, moderate, successful]) == moderate:
+		print 'Moderate Probability: ' + str(moderate)
 		return 1
 	else:
+		print 'Successful Probability: ' + str(successful)
 		return 2
 
 def main():
@@ -140,7 +147,6 @@ def main():
 	splitRatio = 0.9
 	dataset = loadCsv(filename)
 	trainSet, testSet = splitDataset(dataset, splitRatio)
-	print('Split {0} rows into train={1} and test={2} rows').format(len(dataset), len(trainSet), len(testSet))
 	
 	summarySub = []
 	summaryAuthor = []
@@ -148,9 +154,30 @@ def main():
 
 	summarizeAll(trainSet, summarySub, summaryAuthor, summaryTitle)
 
+	predictions = [0, 0, 0]
+	correct = [0, 0, 0, 0]
+	totals = [0, 0, 0]
+
 	for x in testSet:
 		p = predict(x, summarySub, summaryAuthor, summaryTitle)
+		predictions[p] += 1
+		totals[x[0]] += 1
+		if p == x[0]:
+			correct[p] += 1
+			correct[3] += 1
 		print 'Prediction: ' + str(p) + ', Actual: ' + str(x[0])
+		print ''
+
+	print ''
+	print('Split {0} rows into train={1} and test={2} rows').format(len(dataset), len(trainSet), len(testSet))
+	print 'Unsuccessful Predicted: ' + str(predictions[0]) + ', Actual: ' + str(totals[0]) + ', Correct: ' + str(correct[0])
+	print 'Moderately Successful Predicted: ' + str(predictions[1]) + ', Actual: ' + str(totals[1]) + ', Correct: ' + str(correct[1])
+	print 'Successful Predicted: ' + str(predictions[2]) + ', Actual: ' + str(totals[2]) + ', Correct: ' + str(correct[2])
+	print ''
+	print 'Unsuccessful accuracy: ' + str(float(correct[0])/totals[0])
+	print 'Moderately Successful accuracy: ' + str(float(correct[1])/totals[1])
+	print 'Successful accuracy: ' + str(float(correct[2])/totals[2])
+	print 'Total accuracy: ' + str(float(correct[3])/len(testSet))
 
 main()
 
