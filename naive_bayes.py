@@ -127,7 +127,7 @@ def predict(data, summarySub, summaryAuthor, summaryTitle):
 	if unsuccessful < 0.7:
 		print 'Override: predicted 2'
 		return 2
-	elif unsuccessful < 0.75:
+	elif unsuccessful < 0.75 or moderate>0.08:
 		print'Override: predicted 1'
 		return 1
 	elif max([unsuccessful, moderate, successful]) == unsuccessful:
@@ -141,6 +141,40 @@ def predict(data, summarySub, summaryAuthor, summaryTitle):
 	else:
 		print 'Successful Probability: ' + str(successful)
 		return 2
+
+def analyzeSub(summary):
+	result = [0, 'string']
+	for x in summary:
+		if x[3]!='reddit.com':
+			row = [x[0]+x[1]+x[2], x[3]]
+			if row[0] > result[0]:
+				result = row
+	print 'Most popular subreddit: ' + result[1] + ' with ' + str(result[0]) + ' posts'
+
+def analyzeTitle(summary):
+	maxi = 0
+	mini = 0
+	length = 0
+	avg = 0
+	for x in summary:
+		if x[3]>maxi:
+			maxi = x[3]
+		if x[3]<mini:
+			mini = x[3]
+		avg += (x[0]+x[1]+x[2])*x[3]
+		length += x[0]+x[1]+x[2]
+	avg = avg/length
+	print 'Average title length: '+str(avg)
+	print 'Longest title: '+str(maxi)
+	print 'Shortest title: '+str(mini)
+
+def analyzeAuthor(summary):
+	result = [0, 'string']
+	for x in summary:
+		if x[3]:
+			if x[2]>result[0]:
+				result = [x[2], x[3]]
+	print 'Most successful author: '+result[1]+' with '+str(result[0])+' successful posts'
 
 def main():
 	filename = 'lotsadata.csv'
@@ -178,6 +212,11 @@ def main():
 	print 'Moderately Successful accuracy: ' + str(float(correct[1])/totals[1])
 	print 'Successful accuracy: ' + str(float(correct[2])/totals[2])
 	print 'Total accuracy: ' + str(float(correct[3])/len(testSet))
+	print ''
+	analyzeSub(summarySub)
+	analyzeTitle(summaryTitle)
+	analyzeAuthor(summaryAuthor)
+	print ''
 
 main()
 
